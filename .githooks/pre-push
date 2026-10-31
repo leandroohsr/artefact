@@ -1,0 +1,6 @@
+#!/bin/sh
+# Blocks the push if ruff finds lint or formatting issues.
+uv run ruff check . && uv run ruff format --check . || {
+  echo "ruff failed: run 'uv run ruff check . --fix && uv run ruff format .' and try again."
+  exit 1
+}

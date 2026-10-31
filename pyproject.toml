@@ -1,0 +1,34 @@
+[project]
+name = "artefact"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "leandroohsr", email = "poseidondic@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.0",
+    "langchain>=1.4.7",
+    "langchain-openai>=1.7.3",
+    "langgraph>=1.2.19",
+    "openai>=3.42.0",
+    "pandas>=3.1.0",
+    "pydantic>=2.14.2",
+    "pypdf>=6.21.4",
+    "python-dotenv>=1.2.4",
+    "scikit-learn>=1.9.1",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+artefact = "artefact:main"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.3",
+]
