@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Empório da Música Agent")
 
+
 @app.post("/invoke", response_model=ChatResponse)
 def invoke(request: ChatRequest) -> ChatResponse:
     try:
