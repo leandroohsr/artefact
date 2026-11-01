@@ -13,7 +13,7 @@ class Task(BaseModel):
 
 class OutOfScopeItem(BaseModel):
     question: str
-    reason: Literal["accessories", "unrelated"]
+    reason: Literal["related", "unrelated"]
 
 
 class Turn(BaseModel):
