@@ -9,7 +9,7 @@ SpecialistName = Literal["catalog", "orders", "policy"]
 class Task(BaseModel):
     agent: SpecialistName
     question: str
- 
+
 
 class OutOfScopeItem(BaseModel):
     question: str
