@@ -1,16 +1,37 @@
 import logging
 
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 
 from artefact import orchestrator
+from artefact.data import DATA_DIR, DATA_FILES
+from artefact.llm import get_llm
 from artefact.schemas import ChatRequest, ChatResponse
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Empório da Música Agent")
+
+
+def llm_ready() -> bool:
+    # only checks LLM_MODEL
+    try:
+        get_llm()
+    except Exception:
+        logger.exception("Health check: LLM is not configured")
+        return False
+    return True
+
+
+@app.get("/health")
+def health(response: Response) -> dict:
+    checks = {
+        "llm": llm_ready(),
+        "data_files": all((DATA_DIR / name).is_file() for name in DATA_FILES),
+    }
+    healthy = all(checks.values())
+    if not healthy:
+        response.status_code = 503
+    return {"status": "ok" if healthy else "unavailable", "checks": checks}
 
 
 @app.post("/invoke", response_model=ChatResponse)
