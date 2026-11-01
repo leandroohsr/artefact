@@ -1,19 +1,20 @@
 from functools import cache
 from typing import Annotated
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Send
 
-from artefact.agents.catalog.node import CatalogAgent
+from artefact.agents.catalog import CatalogAgent
 from artefact.agents.common import OutOfScopeItem, Task
-from artefact.agents.delivery.node import DeliveryAgent
-from artefact.agents.evaluator.node import EvaluatorAgent
+from artefact.agents.delivery import DeliveryAgent
+from artefact.agents.evaluator import EvaluatorAgent
 from artefact.agents.evaluator.schema import EvaluatorOutput
-from artefact.agents.orders.node import OrdersAgent
-from artefact.agents.policy.node import PolicyAgent
-from artefact.agents.router.node import RouterAgent
+from artefact.agents.orders import OrdersAgent
+from artefact.agents.policy import PolicyAgent
+from artefact.agents.router import RouterAgent
+from artefact.prompts import load_prompt
 
 MAX_REVISIONS = 2
 
@@ -66,8 +67,11 @@ def route_after_evaluation(state: State) -> list[Send] | str:
     return "delivery"
 
 
+# fallback: when a task cannot be completed after the maximum number of retries
 def fallback(state: State) -> dict:
-    pass
+    return {
+        "messages": state["messages"] + [AIMessage(load_prompt("fallback").strip())]
+    }
 
 
 @cache

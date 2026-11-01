@@ -1,15 +1,34 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Response
 
 from artefact import orchestrator
 from artefact.data import DATA_DIR, DATA_FILES
+from artefact.data.catalog import catalog, search_index
+from artefact.data.policies import load_policies
 from artefact.llm import get_llm
 from artefact.schemas import ChatRequest, ChatResponse
 
+logging.basicConfig(format="%(levelname)s:     %(name)s: %(message)s")
+logging.getLogger("artefact").setLevel(logging.DEBUG)
+
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Empório da Música Agent")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        catalog()
+        search_index()
+        load_policies()
+        get_llm()
+    except Exception:
+        logger.exception("Warm-up failed")
+    yield
+
+
+app = FastAPI(title="Empório da Música Agent", lifespan=lifespan)
 
 
 def llm_ready() -> bool:
