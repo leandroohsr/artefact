@@ -28,10 +28,11 @@ def health(response: Response) -> dict:
         "llm": llm_ready(),
         "data_files": all((DATA_DIR / name).is_file() for name in DATA_FILES),
     }
-    healthy = all(checks.values())
-    if not healthy:
-        response.status_code = 503
-    return {"status": "ok" if healthy else "unavailable", "checks": checks}
+    if all(checks.values()):
+        return {"status": "ok", "checks": checks}
+
+    response.status_code = 503
+    return {"status": "unavailable", "checks": checks}
 
 
 @app.post("/invoke", response_model=ChatResponse)
