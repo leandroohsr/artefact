@@ -1,6 +1,7 @@
 from typing import Literal
 
-from langchain_core.messages import AIMessage, BaseMessage
+from langchain.agents.middleware import AgentMiddleware, wrap_model_call
+from langchain_core.messages import AIMessage, BaseMessage, ToolMessage
 from pydantic import BaseModel
 
 SpecialistName = Literal["catalog", "orders", "policy"]
@@ -47,3 +48,16 @@ def specialist_input(payload: dict) -> SpecialistInput:
         question=payload["task"].question,
         feedback=payload["feedback"],
     )
+
+
+def tool_call_budget(max_calls: int) -> AgentMiddleware:
+    def limit_tools(request, handler):
+        tool_results = 0
+        for message in request.messages:
+            if isinstance(message, ToolMessage):
+                tool_results += 1
+        if tool_results >= max_calls:
+            request = request.override(tools=[])
+        return handler(request)
+
+    return wrap_model_call(limit_tools)
