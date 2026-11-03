@@ -2,6 +2,7 @@ from functools import cache
 from typing import Annotated
 
 from langchain_core.messages import AIMessage, HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Send
@@ -101,7 +102,7 @@ def graph() -> CompiledStateGraph:
     )
     builder.add_edge("fallback", END)
 
-    return builder.compile()
+    return builder.compile(checkpointer=MemorySaver())
 
 
 def run(session_id: str, message: str) -> str:
