@@ -29,7 +29,7 @@ class OrdersOutput(BaseModel):
     @field_validator("order", mode="before")
     @classmethod
     def parse_json_string(cls, value):
-        # The model sometimes sends the nested order as a JSON string; parsing it saves a retry round trip.
+        # The model sometimes sends the nested order as a JSON string, parsing it saves a retry round trip.
         if isinstance(value, str):
             return json.loads(value)
         return value

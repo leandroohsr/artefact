@@ -28,7 +28,7 @@ class RouterAgent:
         self.agent = build_agent()
 
     def __call__(self, state: dict) -> dict:
-        """LangGraph node. Splits the latest user message into tasks; returns {"tasks", "out_of_scope"}."""
+        """LangGraph node. Splits the latest user message into tasks, returns {"tasks", "out_of_scope"}."""
         output = self.invoke(
             RouterInput(
                 history=to_turns(state["messages"][:-1]),

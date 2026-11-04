@@ -34,7 +34,7 @@ class CatalogAgent:
         self.agent = build_agent()
 
     def __call__(self, payload: dict) -> dict:
-        """LangGraph node. Receives {"task", "messages", "feedback"} via Send; returns {"results": {"catalog": ...}}."""
+        """LangGraph node. Receives {"task", "messages", "feedback"} via Send, returns {"results": {"catalog": ...}}."""
         output = self.invoke(specialist_input(payload))
         return {"results": {"catalog": output.model_dump()}}
 

@@ -36,7 +36,7 @@ class EvaluatorAgent:
         self.agent = build_agent()
 
     def __call__(self, state: dict) -> dict:
-        """LangGraph node. Reviews the draft; returns {"evaluation"} plus {"messages"} if approved or {"revisions"} if not."""
+        """LangGraph node. Reviews the draft, returns {"evaluation"} plus {"messages"} if approved or {"revisions"} if not."""
         output = self.invoke(
             EvaluatorInput(
                 history=to_turns(state["messages"][:-1]),

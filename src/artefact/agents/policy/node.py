@@ -30,7 +30,7 @@ class PolicyAgent:
         self.agent = build_agent()
 
     def __call__(self, payload: dict) -> dict:
-        """LangGraph node. Receives {"task", "messages", "feedback"} via Send; returns {"results": {"policy": ...}}."""
+        """LangGraph node. Receives {"task", "messages", "feedback"} via Send, returns {"results": {"policy": ...}}."""
         output = self.invoke(specialist_input(payload))
         return {"results": {"policy": output.model_dump()}}
 

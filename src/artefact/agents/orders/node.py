@@ -22,7 +22,7 @@ def build_agent():
         tools=[get_order_status],
         system_prompt=system_prompt,
         response_format=OrdersOutput,
-        # One lookup is enough; the budget stops retries with other spellings of the e-mail or phone.
+        # One lookup is enough, the budget stops retries with other spellings of the e-mail or phone.
         middleware=[tool_call_budget(2)],
     )
 
@@ -33,7 +33,7 @@ class OrdersAgent:
         self.agent = build_agent()
 
     def __call__(self, payload: dict) -> dict:
-        """LangGraph node. Receives {"task", "messages", "feedback"} via Send; returns {"results": {"orders": ...}}."""
+        """LangGraph node. Receives {"task", "messages", "feedback"} via Send, returns {"results": {"orders": ...}}."""
         output = self.invoke(specialist_input(payload))
         return {"results": {"orders": output.model_dump()}}
 

@@ -29,7 +29,7 @@ class DeliveryAgent:
         self.agent = build_agent()
 
     def __call__(self, state: dict) -> dict:
-        """LangGraph node. Writes the reply from tasks, results, out_of_scope and feedback; returns {"draft"}."""
+        """LangGraph node. Writes the reply from tasks, results, out_of_scope and feedback, returns {"draft"}."""
         output = self.invoke(
             DeliveryInput(
                 history=to_turns(state["messages"][:-1]),
