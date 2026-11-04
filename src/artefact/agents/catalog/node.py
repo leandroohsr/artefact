@@ -13,7 +13,7 @@ from artefact.prompts import load_prompt
 
 logger = logging.getLogger(__name__)
 
-MAX_TOOL_CALLS = 10
+MAX_TOOL_CALLS = 5
 
 
 @cache

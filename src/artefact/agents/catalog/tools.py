@@ -9,12 +9,14 @@ def search_products(
     category: str | None = None,
     max_price: float | None = None,
     in_stock_only: bool = False,
-) -> list[dict]:
-    """Search the store catalog. Returns up to 10 products with name, category, price_brl,
-    final_price_brl (with the active promotion applied), stock, status and promotion.
+) -> dict:
+    """Search the store catalog. Returns total_found (how many products match) and products:
+    up to 40 of them, cheapest first, with name, category, price_brl, final_price_brl
+    (with the active promotion applied), stock, status and promotion.
 
     Args:
-        query: product name, brand or model, e.g. "Takamine GD20" or "violão nylon".
+        query: product name, brand or model, e.g. "Takamine GD20" or "Yamaha nylon".
+            For a type of product such as "violões", use category instead.
         category: one of "Guitarras", "Baixos", "Baterias e Percussão", "Teclados e Pianos",
             "Violões", "Instrumentos de Sopro (Madeiras)", "Instrumentos de Sopro (Metais)",
             "Cordas Orquestrais", "Ukuleles".

@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from artefact.data.loader import load_csv
 
-MAX_RESULTS = 10
+MAX_RESULTS = 40
 
 MIN_SCORE = 0.3
 
@@ -71,7 +71,7 @@ def search_products(
     category: str | None = None,
     max_price: float | None = None,
     in_stock_only: bool = False,
-) -> list[dict]:
+) -> dict:
     df = catalog()
 
     # Open listings show only products on sale, a search by name also finds discontinued or coming-soon products, so the agent can explain their status
@@ -95,7 +95,7 @@ def search_products(
     records = []
     for _, row in df.head(MAX_RESULTS).iterrows():
         records.append(to_record(row))
-    return records
+    return {"total_found": len(df), "products": records}
 
 
 def get_active_promotions(category: str | None = None) -> list[dict]:
