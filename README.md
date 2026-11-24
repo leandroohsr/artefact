@@ -1,128 +1,128 @@
-# Empório da Música: agente de atendimento
+# Empório da Música: customer service agent
 
-Este projeto é a minha solução para o desafio técnico da Artefact. É um agente de atendimento para a loja fictícia Empório da Música, que responde perguntas sobre produtos, preços, estoque, promoções, status de pedidos e políticas da loja.
+This project is my solution to the Artefact technical challenge. It is a customer service agent for the fictional store Empório da Música. It answers questions about products, prices, stock, promotions, order status and store policies.
 
-## Como rodar
+## How to run
 
-Você precisa de Python 3.12+ ou do [uv](https://docs.astral.sh/uv/).
+You need Python 3.12+ or [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync
-cp .env.example .env        # coloque sua ANTHROPIC_API_KEY
+cp .env.example .env        # add your ANTHROPIC_API_KEY
 ```
 
-Depois, em dois terminais:
+Then, in two terminals:
 
 ```bash
-uv run artefact                          # API em http://127.0.0.1:8000
-uv run streamlit run frontend/app.py     # chat em http://localhost:8501
+uv run artefact                          # API at http://127.0.0.1:8000
+uv run streamlit run frontend/app.py     # chat at http://localhost:8501
 ```
 
-Também dá para chamar a API direto:
+You can also call the API directly:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/invoke -H "Content-Type: application/json" \
   -d '{"session_id": "t1", "message": "Quanto custa o Takamine GD20?"}'
 ```
 
-### Variáveis do `.env`
+### `.env` variables
 
-| Variável | Exemplo | Para que serve |
+| Variable | Example | What it is for |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | | chave da API |
-| `LLM_MODEL` | `anthropic:claude-haiku-5-5` | modelo usado, no formato `provedor:modelo` do LangChain |
-| `LLM_EFFORT` | `low` | esforço de raciocínio (opcional) |
-| `LLM_MAX_TOKENS` | `16000` | limite de tokens na resposta |
+| `ANTHROPIC_API_KEY` | | API key |
+| `LLM_MODEL` | `anthropic:claude-haiku-5-5` | model to use, in LangChain's `provider:model` format |
+| `LLM_EFFORT` | `low` | reasoning effort (optional) |
+| `LLM_MAX_TOKENS` | `16000` | token limit for the response |
 
-Para usar outro provedor, troque o `LLM_MODEL` (por exemplo `openai:...`) e preencha a chave dele.
+To use another provider, change `LLM_MODEL` (for example `openai:...`) and fill in its key.
 
-## Arquitetura
+## Architecture
 
 ```mermaid
 flowchart TD
-    start([Mensagem do cliente]) --> router
-    router --> especialistas
-    router -.->|só fora do escopo| delivery
-    subgraph especialistas [Especialistas em paralelo]
+    start([Customer message]) --> router
+    router --> specialists
+    router -.->|out of scope only| delivery
+    subgraph specialists [Specialists in parallel]
         direction LR
         catalog
         orders
         policy
     end
-    especialistas --> delivery
+    specialists --> delivery
     delivery --> evaluator
-    evaluator -->|aprovou| resposta([Resposta ao cliente])
-    evaluator -.->|faltou dado| especialistas
-    evaluator -.->|reescrever| delivery
-    evaluator -->|reprovou após 2 revisões| fallback[fallback com o WhatsApp]
-    fallback --> resposta
+    evaluator -->|approved| answer([Answer to the customer])
+    evaluator -.->|missing data| specialists
+    evaluator -.->|rewrite| delivery
+    evaluator -->|rejected after 2 revisions| fallback[fallback with the WhatsApp contact]
+    fallback --> answer
 ```
 
-O agente é um grafo em LangGraph servido por uma API FastAPI. Cada mensagem passa por estas etapas:
+The agent is a LangGraph graph served by a FastAPI API. Each message goes through these steps:
 
-1. O **router** lê a mensagem e divide em tarefas, no máximo uma por especialista. Também marca o que está fora do escopo da loja.
-2. Os **especialistas** rodam em paralelo:
-   * **catalog** busca produtos, preços, estoque e promoções ativas.
-   * **orders** consulta status e rastreio de um pedido, mas só com o número do pedido e o e-mail ou telefone do cliente.
-   * **policy** responde sobre as regras da loja usando o manual, que já está no prompt.
-3. O **delivery** junta os resultados e escreve uma resposta só, em português e no tom da loja.
-4. O **evaluator** confere se a resposta cobre tudo o que foi perguntado e se não tem nada inventado. Se reprovar, pede para refazer a busca ou só reescrever, até 2 vezes. Se ainda assim não aprovar, o cliente recebe uma mensagem pedindo para falar com a equipe pelo WhatsApp.
+1. The **router** reads the message and splits it into tasks, at most one per specialist. It also flags anything outside the store's scope.
+2. The **specialists** run in parallel:
+   * **catalog** looks up products, prices, stock and active promotions.
+   * **orders** checks the status and tracking of an order, but only with the order number and the customer's email or phone.
+   * **policy** answers questions about the store rules using the manual, which is already in the prompt.
+3. The **delivery** agent combines the results and writes a single answer, in Portuguese and in the store's tone.
+4. The **evaluator** checks that the answer covers everything that was asked and that nothing is made up. If it rejects the answer, it asks for a new lookup or just a rewrite, up to 2 times. If the answer still is not approved, the customer gets a message asking them to contact the team on WhatsApp.
 
-O histórico da conversa fica em memória, separado por `session_id`.
+The conversation history is kept in memory, separated by `session_id`.
 
 ```
 src/artefact/
-  api.py, orchestrator.py, llm.py   # API, grafo e modelo
-  agents/<agente>/                  # node.py, schema.py, tools.py
-  prompts/*.md                      # um prompt por agente e a persona da loja
-  data/                             # leitura dos CSVs e do PDF, sem LLM
-frontend/app.py                     # chat em Streamlit
+  api.py, orchestrator.py, llm.py   # API, graph and model
+  agents/<agent>/                   # node.py, schema.py, tools.py
+  prompts/*.md                      # one prompt per agent and the store persona
+  data/                             # reads the CSVs and the PDF, no LLM
+frontend/app.py                     # Streamlit chat
 ```
 
-## Decisões técnicas
+## Technical decisions
 
-* **LangGraph**, porque o fluxo tem agentes em paralelo e um ciclo de revisão.
-* **Claude Haiku**, porque atendimento precisa de resposta rápida e barata.
-* **Sem RAG vetorial.** O manual é pequeno e vai inteiro no prompt.
-* **Tools para consultar os dados.** O modelo pede a informação e o código busca nos CSVs, então ele não inventa preço nem vê dados de outros clientes.
-* **Um prompt curto por agente**, e só um agente escreve para o cliente.
+* **LangGraph**, because the flow has agents running in parallel and a review loop.
+* **Claude Haiku**, because customer service needs fast and cheap answers.
+* **No vector RAG.** The manual is small and goes into the prompt in full.
+* **Tools to query the data.** The model asks for the information and the code looks it up in the CSVs, so it does not make up prices or see other customers' data.
+* **One short prompt per agent**, and only one agent writes to the customer.
 
-## Tratamento dos dados e suposições
+## Data handling and assumptions
 
-* Produtos descontinuados ou que ainda vão chegar não são vendidos.
-* Só valem as promoções ativas.
-* Quando o total do pedido não bate com os itens, informo o total cobrado.
+* Discontinued products and products that have not arrived yet are not sold.
+* Only active promotions count.
+* When the order total does not match the items, I report the total that was charged.
 
-## Exemplos
+## Examples
 
-Conversas feitas no chat em Streamlit. As imagens também estão em [`examples/`](examples/).
+Conversations from the Streamlit chat. The images are also in [`examples/`](examples/).
 
-**Catálogo com filtro de preço.** O agente consulta os violões em estoque até R$ 1.000.
+**Catalog with a price filter.** The agent looks up the acoustic guitars in stock up to R$ 1,000.
 
-![Violões até R$ 1000](examples/violoes-ate-1000.png)
+![Acoustic guitars up to R$ 1,000](examples/violoes-ate-1000.png)
 
-**Informação da loja.** Endereço e horário vêm do manual.
+**Store information.** Address and opening hours come from the manual.
 
-![Endereço da loja](examples/endereco-da-loja.png)
+![Store address](examples/endereco-da-loja.png)
 
-**Preço de um produto.** Preço e estoque vêm da consulta ao catálogo.
+**Price of a product.** Price and stock come from the catalog lookup.
 
-![Preço do Takamine GD20](examples/preco-takamine-gd20.png)
+![Price of the Takamine GD20](examples/preco-takamine-gd20.png)
 
-**Política de devolução.** O agente aplica a regra de arrependimento do manual, com as exceções.
+**Return policy.** The agent applies the right of withdrawal rule from the manual, with its exceptions.
 
-![Devolução](examples/devolucao.png)
+![Returns](examples/devolucao.png)
 
-## Limitações e o que eu faria com mais tempo
+## Limitations and what I would do with more time
 
-* **Latência e custo.** Cada mensagem faz de 4 a 6 chamadas ao modelo e leva uns 10 segundos ou mais, pularia o evaluator em respostas simples como comprimentos e mostraria a resposta.
-* **Histórico em memória.** Ele se perde quando a API reinicia. Eu trocaria por um checkpointer em sqlite ou postgres.
-* **Sem testes automatizados.** Testei os fluxos na mão. Eu adicionaria testes das consultas e das decisões do grafo.
+* **Latency and cost.** Each message makes 4 to 6 model calls and takes around 10 seconds or more. I would skip the evaluator on simple replies such as greetings and show the answer right away.
+* **In-memory history.** It is lost when the API restarts. I would replace it with a sqlite or postgres checkpointer.
+* **No automated tests.** I tested the flows by hand. I would add tests for the data lookups and the graph decisions.
 
-## Uso de assistentes de código
+## Use of coding assistants
 
-Usei o Claude Code dentro do VS Code durante todo o projeto.
+I used Claude Code inside VS Code throughout the project.
 
-* **Análise dos dados.** Pedi scripts para encontrar problemas nos CSVs.
-* **Implementação.** Fui construindo um agente por vez e revisando cada mudança. As decisões de arquitetura e de produto foram minhas.
-* **Depuração.** Usei para investigar, pelos logs, os loops de chamadas de tool e os erros da API.
+* **Data analysis.** I asked for scripts to find problems in the CSVs.
+* **Implementation.** I built one agent at a time and reviewed each change. The architecture and product decisions were mine.
+* **Debugging.** I used it to investigate tool call loops and API errors through the logs.
